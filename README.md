@@ -1,0 +1,2 @@
+# aimasteryhq-redirects
+beacons
