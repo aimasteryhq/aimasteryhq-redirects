@@ -1,0 +1,54 @@
+{
+  "id": "xiabGWCXUOe469Nm",
+  "name": "Angie Telegram Personal AI Assistant",
+  "nodes": [
+    {
+      "id": "64fe44db-af19-43eb-9ff1-de0a72a9e645",
+      "name": "Listen for incoming events",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "parameters": {
+        "updates": ["message"]
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "Ov00cT0t4h4AFtZ0",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "id": "759b975f-d17c-4386-a5b3-12413f0361f4",
+      "name": "Angie, AI Assistant",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "parameters": {
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "You are a helpful AI assistant. Always summarize emails, filter events, and provide clear answers."
+        }
+      }
+    },
+    {
+      "id": "e35c04ff-a050-4564-8c1b-5b22b556872f",
+      "name": "Telegram Reply",
+      "type": "n8n-nodes-base.telegram",
+      "parameters": {
+        "chatId": "={{ $('Listen for incoming events').first().json.message.from.id }}",
+        "text": "={{ $json.output }}"
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "Ov00cT0t4h4AFtZ0",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Listen for incoming events": [
+      { "node": "Angie, AI Assistant", "type": "main", "index": 0 }
+    ],
+    "Angie, AI Assistant": [
+      { "node": "Telegram Reply", "type": "main", "index": 0 }
+    ]
+  }
+}
