@@ -1,0 +1,72 @@
+{
+  "id": "e0BX3fhHvcBuQTBU",
+  "name": "WhatsApp Customer Support Bot",
+  "nodes": [
+    {
+      "id": "630ac52d-1d65-408e-b614-17a97bddab10",
+      "name": "when message received",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "parameters": {
+        "updates": ["messages"]
+      },
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "phjmQIV096cn2hJ9",
+          "name": "WhatsApp OAuth account"
+        }
+      }
+    },
+    {
+      "id": "8f4a786b-fc6d-4e2f-b8df-c605475afc81",
+      "name": "company's knowledge",
+      "type": "n8n-nodes-base.googleDocs",
+      "parameters": {
+        "operation": "get",
+        "documentURL": "=1Uv1WYCcXNlp-jaeJ7-3MNxWYfPj-wcYnJv4_colXSvk"
+      }
+    },
+    {
+      "id": "df46b528-cbbd-49c2-9b83-4402ef0c8ac7",
+      "name": "Prepare Prompt",
+      "type": "n8n-nodes-base.aiTransform",
+      "parameters": {
+        "jsCode": "/* builds final prompt with date, doc text and whatsapp message */"
+      }
+    },
+    {
+      "id": "02f761e2-83c4-488b-91f4-f4ae11b15c00",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "parameters": {
+        "text": "={{ $json.finalPrompt }}",
+        "options": {
+          "systemMessage": "You are [Company]’s support assistant. Never say 'based on the document'."
+        }
+      }
+    },
+    {
+      "id": "d77ae0ae-c332-4030-8c77-8ea44c56c9a8",
+      "name": "Send AI Agent's Answer",
+      "type": "n8n-nodes-base.whatsApp",
+      "parameters": {
+        "operation": "send",
+        "textBody": "={{ $json.answer }}",
+        "recipientPhoneNumber": "={{ $('when message received').item.json.contacts[0].wa_id }}"
+      }
+    }
+  ],
+  "connections": {
+    "when message received": [
+      { "node": "company's knowledge", "type": "main", "index": 0 }
+    ],
+    "company's knowledge": [
+      { "node": "Prepare Prompt", "type": "main", "index": 0 }
+    ],
+    "Prepare Prompt": [
+      { "node": "AI Agent", "type": "main", "index": 0 }
+    ],
+    "AI Agent": [
+      { "node": "Send AI Agent's Answer", "type": "main", "index": 0 }
+    ]
+  }
+}
