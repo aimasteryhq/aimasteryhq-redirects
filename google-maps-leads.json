@@ -1,0 +1,59 @@
+{
+  "id": "cmncRJ2rlecEwZxU",
+  "name": "Google Maps Lead Generator",
+  "nodes": [
+    {
+      "id": "4a6f9faa-5b11-41fe-88c9-cc8a262a2de2",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "parameters": {}
+    },
+    {
+      "id": "b10c0ed6-5a94-4272-b65c-bd19bd674fa0",
+      "name": "Scrape Google Maps",
+      "type": "n8n-nodes-base.httpRequest",
+      "parameters": {
+        "url": "https://www.google.com/maps/search/calgary+dentists"
+      }
+    },
+    {
+      "id": "fb76c70c-385d-4e7f-93cd-43023690076a",
+      "name": "Extract URLs",
+      "type": "n8n-nodes-base.code",
+      "parameters": {
+        "jsCode": "const input = $input.first().json.data;\nconst regex = /https?:\\/\\/[^\\/\\s\"'>]+/g;\nconst websites = input.match(regex);\nreturn websites.map(website => ({json:{website}}));"
+      }
+    },
+    {
+      "id": "7e9c227c-2321-429a-a3f3-4c3a77bc6cf3",
+      "name": "Extract Emails",
+      "type": "n8n-nodes-base.code",
+      "parameters": {
+        "jsCode": "const input = $input.first().json.data;\nconst regex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/g;\nconst emails = input.match(regex);\nreturn {json: {emails}};"
+      }
+    },
+    {
+      "id": "aa3e9285-235d-4fda-ab0e-45134cf825dd",
+      "name": "Add to Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "parameters": {
+        "operation": "append",
+        "sheetName": "emails"
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": [
+      { "node": "Scrape Google Maps", "type": "main", "index": 0 }
+    ],
+    "Scrape Google Maps": [
+      { "node": "Extract URLs", "type": "main", "index": 0 }
+    ],
+    "Extract URLs": [
+      { "node": "Extract Emails", "type": "main", "index": 0 }
+    ],
+    "Extract Emails": [
+      { "node": "Add to Sheet", "type": "main", "index": 0 }
+    ]
+  }
+}
