@@ -1,0 +1,69 @@
+{
+  "id": "cmncRJ2rlecEwZxU",
+  "name": "AI Image Generator Workflow",
+  "nodes": [
+    {
+      "id": "e108c56f-b7fb-4818-aed5-c55c59b81516",
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "parameters": {}
+    },
+    {
+      "id": "3a150703-2a7f-4255-9da0-6a15c005290c",
+      "name": "AI Agent - Create Image Prompt",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "parameters": {
+        "text": "={{ $('Chat Trigger').item.json.chatInput }}",
+        "options": {
+          "systemMessage": "You are an AI image‑prompt creation expert. Create prompts that generate high‑quality, realistic images."
+        }
+      }
+    },
+    {
+      "id": "de666684-e743-40ef-b604-1cff33b107de",
+      "name": "Set Filename",
+      "type": "n8n-nodes-base.code",
+      "parameters": {
+        "jsCode": "for (let i = 0; i < items.length; i++) {\n  items[i].json.fileName = `image_${i+1}.png`;\n}\nreturn items;"
+      }
+    },
+    {
+      "id": "fba88baa-70e8-452c-b44e-d1685df0eb7d",
+      "name": "HTTP Request - Create Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "parameters": {
+        "url": "=https://image.pollinations.ai/prompt/{{ $('AI Agent - Create Image Prompt').item.json.body.prompt }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "a3e5fa40-51c1-41fa-83cb-d6d598f1ff49",
+      "name": "Telegram Response",
+      "type": "n8n-nodes-base.telegram",
+      "parameters": {
+        "operation": "sendPhoto",
+        "binaryData": true
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "your-telegram-id",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Chat Trigger": [
+      { "node": "AI Agent - Create Image Prompt", "type": "main", "index": 0 }
+    ],
+    "AI Agent - Create Image Prompt": [
+      { "node": "Set Filename", "type": "main", "index": 0 }
+    ],
+    "Set Filename": [
+      { "node": "HTTP Request - Create Image", "type": "main", "index": 0 }
+    ],
+    "HTTP Request - Create Image": [
+      { "node": "Telegram Response", "type": "main", "index": 0 }
+    ]
+  }
+}
